@@ -1,16 +1,42 @@
 import xlsxwriter
+from os import scandir
 
 def main():
-    libro = xlsxwriter.Workbook('reporte_estadisticas.xlsx',{'strings_to_urls': False})
+    #valores iniciales
+    file_output="output/reporte_estadisticas.xlsx";
+    dir_input="input/"
+
+    #creacion del archivo
+    libro = xlsxwriter.Workbook(file_output,{'strings_to_urls': False})
     hoja = libro.add_worksheet()
     hoja.freeze_panes(1,0) #Freeze the first row
     
-    f=open("estadisticas_exprozy.txt","r")
     #f=open("archivo_iica.log","r")
     cell_format = libro.add_format()
-    
+
     row = 1
     crear_header_excel(hoja,cell_format)
+    archivos=leer_input(dir_input)
+
+    for archivo in archivos:
+        try:
+            ruta_archivo=dir_input+archivo
+            row=insertarDatosReporte(ruta_archivo,hoja,row)
+
+        except:
+            print("An exception occurred inserted")
+
+    ultima='I'+str(row)
+    hoja.autofilter('A1:'+ultima)
+
+    #Cerramos el libro
+    libro.close()
+
+def leer_input(path):
+    return [obj.name for obj in scandir(path) if obj.is_file()]
+
+def insertarDatosReporte(archivo,hoja,row):
+    f=open(archivo,"r")
     for x in f:
         try:
             cols = x.split(" ")
@@ -39,12 +65,9 @@ def main():
             
             row += 1
         except:
-            print("An exception occurred")    
-
-    ultima='I'+str(row)
-    hoja.autofilter('A1:'+ultima)
-    #Cerramos el libro
-    libro.close()
+            print("An exception occurred")
+    
+    return row
 
 def limpiar_fecha(fecha):
     fecha_completa=fecha.replace('[','').split(":",1)
